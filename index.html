@@ -1,82 +1,77 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>WTM Market · Barkod Okuyucu</title>
-  <meta name="description" content="Market ürünlerinin barkodlarını telefon kamerasıyla okuyup fiyat bilgisi veren PWA." />
-  <meta name="theme-color" content="#0f7a3d" />
-  <meta name="mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <link rel="manifest" href="manifest.json" />
-  <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
-  <link rel="apple-touch-icon" href="icons/icon-192.png" />
-  <link rel="stylesheet" href="style.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Market PWA - Akıllı Barkod Okuyucu</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2c3e50">
 </head>
 <body>
+    <header>
+        <h1>🛒 Market Akıllı Asistan</h1>
+        <div class="mode-selector">
+            <button id="btnSingleMode" class="active">Tekli Sorgu Modu</button>
+            <button id="btnCartMode">Sepet Modu</button>
+        </div>
+    </header>
 
-  <header class="appbar">
-    <div class="brand">
-      <span class="logo" aria-hidden="true">W</span>
-      <div class="brand-text">
-        <h1>WTM Market</h1>
-        <p>Barkod Okuyucu</p>
-      </div>
-    </div>
-    <button id="installBtn" class="btn ghost" hidden>Yükle</button>
-  </header>
+    <main>
+        <!-- Kamera ve Tarayıcı Alanı -->
+        <section class="scanner-section">
+            <div class="video-container">
+                <video id="scanner" autoplay playsinline muted></video>
+                <div class="scan-overlay"></div>
+            </div>
+            
+            <div id="cameraError" class="error-message hidden">
+                Kamera izni reddedildi veya cihazda kamera bulunamadı. Lütfen tarayıcı ayarlarından izin verin.
+            </div>
 
-  <main>
-    <!-- Mod seçici -->
-    <div class="tabs" role="tablist" aria-label="Okuma modu">
-      <button class="tab active" data-mode="single" role="tab" aria-selected="true">Tekli Sorgu</button>
-      <button class="tab" data-mode="cart" role="tab" aria-selected="false">Sepet Modu</button>
-    </div>
+            <!-- Alternatif Manuel Giriş -->
+            <div class="manual-entry">
+                <input type="text" id="manualBarcode" placeholder="Barkod numarasını girin...">
+                <button id="btnManualSubmit">Sorgula / Ekle</button>
+            </div>
+        </section>
 
-    <p id="modeHint" class="mode-hint">Tek bir ürünün barkodunu okutun; bilgileri görüntülensin.</p>
+        <!-- Sonuç / Bilgi Alanı (Tekli Mod) -->
+        <section id="singleResultSection" class="result-section">
+            <h2>Ürün Bilgisi</h2>
+            <div id="productCard" class="card placeholder">
+                <p>Henüz bir ürün okunmadı.</p>
+            </div>
+        </section>
 
-    <!-- Kamera -->
-    <section class="scanner" aria-label="Kamera görüntüsü">
-      <video id="video" playsinline muted autoplay></video>
-      <div class="overlay" aria-hidden="true">
-        <div class="frame"></div>
-        <div class="laser"></div>
-      </div>
-      <button id="torchBtn" class="torch" type="button" hidden aria-label="Flaşı aç/kapat">🔆</button>
-      <div id="cameraMsg" class="camera-msg" hidden></div>
-    </section>
+        <!-- Sepet Alanı (Sepet Modu) -->
+        <section id="cartSection" class="cart-section hidden">
+            <h2>Sepetim</h2>
+            <div class="cart-list-container">
+                <ul id="cartList">
+                    <!-- Sepet ürünleri buraya eklenecek -->
+                </ul>
+            </div>
+            <div class="cart-summary">
+                <h3>Toplam Tutar: <span id="cartTotal">0.00</span> TL</h3>
+                <button id="btnClearCart" class="danger-btn">Sepeti Temizle</button>
+            </div>
+        </section>
+    </main>
 
-    <!-- Elle giriş -->
-    <form id="manualForm" class="manual" autocomplete="off">
-      <input id="manualInput" type="text" inputmode="numeric" enterkeyhint="search"
-             placeholder="Barkodu elle girin (örn. 8690504010012)" aria-label="Barkod numarası" />
-      <button type="submit" class="btn primary">Sorgula</button>
-    </form>
+    <!-- Bildirim / Toast Alanı -->
+    <div id="toast" class="toast hidden"></div>
 
-    <div id="toast" class="toast" hidden role="status" aria-live="polite"></div>
-
-    <!-- Sonuç kartı -->
-    <section id="result" class="card" hidden aria-live="polite"></section>
-
-    <!-- Sepet -->
-    <section id="cartPanel" class="card" hidden>
-      <div class="cart-head">
-        <h2>Sepet</h2>
-        <button id="clearCart" class="btn danger small" type="button">Temizle</button>
-      </div>
-      <ul id="cartList" class="cart-list"></ul>
-      <div class="total">
-        <span>Ödenecek Tutar</span>
-        <strong id="totalPrice">0,00 ₺</strong>
-      </div>
-      <p class="hint">Sepetteki ürün adedi: <span id="cartCount">0</span></p>
-    </section>
-  </main>
-
-  <footer class="foot">
-    Barkod çözümleme tamamen cihaz üzerinde, tarayıcının <strong>BarcodeDetector</strong> API’si ile yapılır.
-  </footer>
-
-  <script src="app.js"></script>
+    <script src="app.js"></script>
+    <script>
+        // Service Worker Kaydı
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('Service Worker Kayıt Başarılı:', reg.scope))
+                    .catch(err => console.log('Service Worker Kayıt Hatası:', err));
+            });
+        }
+    </script>
 </body>
 </html>
