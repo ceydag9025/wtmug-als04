@@ -1,28 +1,28 @@
 // Market Ürün Veritabanı (JSON Formatında asgari 5 ürün)
 const productsDatabase = [
     {
-        barcode: "8690504011234",
-        name: "Tam Yağlı Süt 1L",
-        brand: "Sütaş",
+        barcode: "8690632041827",
+        name: "Toz Kahve",
+        brand: "Nescafe",
         category: "Gıda",
-        price: 24.50,
-        amount: "1 Litre"
+        price: 15 TL,
+        amount: "10 gram"
     },
     {
-        barcode: "8690632015678",
-        name: "Yarım Yağlı Dilimli Tost Peyniri",
-        brand: "Muratbey",
-        category: "Gıda",
-        price: 89.90,
-        amount: "400 Gram"
+        barcode: "4015000090940",
+        name: "Stick Yapıştırıcı",
+        brand: "Pritt",
+        category: "Kırtasiye",
+        price: 80 TL,
+        amount: "43 gram"
     },
     {
-        barcode: "8691234567890",
-        name: "Bulaşık Deterjanı",
-        brand: "Fairy",
-        category: "Temizlik",
-        price: 65.00,
-        amount: "750 ml"
+        barcode: "869085    7011964",
+        name: "Zımba Teli",
+        brand: "3A",
+        category: "Kırtasiye",
+        price: 35 TL,
+        amount: "1000 adet"
     },
     {
         barcode: "8699876543210",
