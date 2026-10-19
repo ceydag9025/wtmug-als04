@@ -1,11 +1,11 @@
-// Market Ürün Veritabanı (JSON Formatında asgari 5 ürün)
+// Market Ürün Veritabanı
 const productsDatabase = [
     {
         barcode: "8690632041827",
         name: "Toz Kahve",
         brand: "Nescafe",
         category: "Gıda",
-        price: 15 TL,
+        price: 15.00,
         amount: "10 gram"
     },
     {
@@ -13,15 +13,15 @@ const productsDatabase = [
         name: "Stick Yapıştırıcı",
         brand: "Pritt",
         category: "Kırtasiye",
-        price: 80 TL,
+        price: 80.00,
         amount: "43 gram"
     },
     {
-        barcode: "869085    7011964",
+        barcode: "8690857011964",
         name: "Zımba Teli",
         brand: "3A",
         category: "Kırtasiye",
-        price: 35 TL,
+        price: 35.00,
         amount: "1000 adet"
     },
     {
@@ -43,11 +43,11 @@ const productsDatabase = [
 ];
 
 // Durum Değişkenleri
-let currentMode = 'single'; // 'single' veya 'cart'
+let currentMode = 'single';
 let cart = [];
 let lastScannedBarcode = null;
 let lastScannedTime = 0;
-const SCAN_COOLDOWN = 1500; // 1.5 saniye aynı barkod engelleme süresi
+const SCAN_COOLDOWN = 2000;
 
 // DOM Elementleri
 const videoElement = document.getElementById('scanner');
@@ -81,7 +81,7 @@ btnCartMode.addEventListener('click', () => {
     singleResultSection.classList.add('hidden');
 });
 
-// Kamera Başlatma ve İzin Yönetimi
+// Kamera Başlatma
 async function initCamera() {
     try {
         const stream = await navigator.mediaDevices.getUserMedia({
@@ -91,7 +91,7 @@ async function initCamera() {
         videoElement.setAttribute('playsinline', true);
         cameraErrorElement.classList.add('hidden');
         
-        // Barkod Tarama Döngüsünü Başlat
+        // Tarama döngüsünü başlat
         requestAnimationFrame(scanBarcodes);
     } catch (error) {
         console.error("Kamera erişim hatası:", error);
@@ -99,26 +99,26 @@ async function initCamera() {
     }
 }
 
-// Barkod Tarama (BarcodeDetector API)
+// Barkod Tarama (Güvenli Mod)
 async function scanBarcodes() {
     if (videoElement.readyState === videoElement.HAVE_ENOUGH_DATA) {
         if (!window.BarcodeDetector) {
-            showToast("Tarayıcınız BarcodeDetector API'sini desteklemiyor.");
+            // Tarayıcı desteklemiyorsa döngüyü kırmıyoruz, sadece kamerayı açık tutuyoruz
+            // Kullanıcı manuel giriş yapabilir.
+            requestAnimationFrame(scanBarcodes);
             return;
         }
 
         try {
-            // Klasik barkod formatları (QR hariç: ean_13, code_128, vb.)
             const detector = new BarcodeDetector({ 
                 formats: ['ean_13', 'ean_8', 'code_128', 'code_39', 'upc_a', 'upc_e'] 
             });
             const barcodes = await detector.detect(videoElement);
 
-            if (barcodes.length > 0) {
-                const code = barcodes[0].rawValue;
+            if (barcodes && barcodes.length > 0) {
+                const code = barcodes[0].rawValue.trim();
                 const now = Date.now();
 
-                // 1.5 saniye içinde aynı barkod kadrajdaysa yoksay
                 if (code !== lastScannedBarcode || (now - lastScannedTime) > SCAN_COOLDOWN) {
                     lastScannedBarcode = code;
                     lastScannedTime = now;
@@ -126,18 +126,25 @@ async function scanBarcodes() {
                 }
             }
         } catch (err) {
-            console.error("Barkod okuma hatası:", err);
+            // Tarama anlık hata verse bile döngünün çökmesini engelle
+            console.warn("Anlık tarama atlandı:", err);
         }
     }
     requestAnimationFrame(scanBarcodes);
 }
 
-// Barkod İşleme ve Eşleştirme Mantığı
+// Ürün Eşleştirme
 function processBarcode(barcode) {
-    const product = productsDatabase.find(p => p.barcode === barcode);
+    // Boşlukları temizleyerek arama yap
+    const cleanBarcode = barcode.trim();
+    const product = productsDatabase.find(p => p.barcode === cleanBarcode);
 
     if (!product) {
-        showToast("Ürün bulunamadı.");
+        showToast("Ürün bulunamadı: " + cleanBarcode);
+        if (currentMode === 'single') {
+            productCard.innerHTML = `<p style="color:red">Bulunamayan Barkod: ${cleanBarcode}</p>`;
+            productCard.classList.remove('placeholder');
+        }
         return;
     }
 
@@ -163,7 +170,7 @@ function displaySingleProduct(product) {
     `;
 }
 
-// Sepet Modu İşlemleri
+// Sepet İşlemleri
 function addToCart(product) {
     cart.push(product);
     updateCartUI();
@@ -173,7 +180,7 @@ function updateCartUI() {
     cartList.innerHTML = '';
     let total = 0;
 
-    cart.forEach((item, index) => {
+    cart.forEach((item) => {
         total += item.price;
         const li = document.createElement('li');
         li.innerHTML = `
@@ -192,16 +199,23 @@ btnClearCart.addEventListener('click', () => {
     showToast("Sepet temizlendi.");
 });
 
-// Manuel Barkod Girişi
-btnManualSubmit.addEventListener('click', () => {
+// Manuel Giriş
+function handleManualEntry() {
     const code = manualBarcode.value.trim();
     if (code) {
         processBarcode(code);
         manualBarcode.value = '';
     }
+}
+
+btnManualSubmit.addEventListener('click', handleManualEntry);
+manualBarcode.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+        handleManualEntry();
+    }
 });
 
-// Bildirim (Toast) Gösterimi
+// Toast Bildirim
 function showToast(message) {
     toast.textContent = message;
     toast.classList.remove('hidden');
@@ -210,5 +224,5 @@ function showToast(message) {
     }, 2000);
 }
 
-// Uygulamayı Başlat
+// Başlat
 initCamera();
